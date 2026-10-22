@@ -561,9 +561,12 @@ export async function unhide(t: Target, st: TargetState, ctx: Context, reason: '
   if (t.block.length && settings.exists) {
     text = setBlock(settings.text, t.block, parseBlock(baseText, t.block, `The committed ${short(t, t.settingsFile)}`));
     kept = !G.sameText(text, baseText);
+    if (!kept) text = baseText;
   }
   let backup: BackupEntry | undefined;
-  if (!G.sameText(settings.text, text)) {
+  // Compared byte for byte: a file that differs from the commit only in its line endings
+  // (CRLF with core.autocrlf=false, say) is still a change to Git, and would stop the pull.
+  if (settings.text !== text) {
     backup = await ctx.backups.take(t.id, reason === 'pull' ? 'Unhid settings.json to pull' : 'Unhid settings.json for a team change', [settings]);
     await atomicWrite(t.settingsFile, text, t.root);
   }

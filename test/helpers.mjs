@@ -1,7 +1,7 @@
 import { execFileSync } from 'child_process';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import { createRequire } from 'module';
-import { tmpdir } from 'os';
+import { devNull, tmpdir } from 'os';
 import path from 'path';
 import { after } from 'node:test';
 
@@ -45,21 +45,31 @@ export function router(route = 'local') {
   return fn;
 }
 
-const gitEnv = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.com', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
+// The machine's Git config is shut out for the tests and for the extension's own git calls
+// alike (it inherits process.env): a Windows runner's system core.autocrlf=true seen by one
+// side only would make the two disagree about line endings. Tests that care set it per repo.
+process.env.GIT_CONFIG_GLOBAL = devNull;
+process.env.GIT_CONFIG_NOSYSTEM = '1';
+const gitEnv = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.com' };
 export function git(cwd, ...args) {
   return execFileSync('git', args, { cwd, env: gitEnv, encoding: 'utf8' });
 }
-/** A repository with .vscode/settings.json committed, cloned so it has an upstream. */
-export function repo(settings) {
+/**
+ * A repository with .vscode/settings.json committed, cloned so it has an upstream.
+ * `config` is repo-level Git config for both sides, e.g. { 'core.autocrlf': 'true' }.
+ */
+export function repo(settings, config = {}) {
   const dir = tmp('lws-git-');
   const up = path.join(dir, 'up');
   mkdirSync(up);
   git(up, 'init', '-q', '-b', 'main');
+  const cfg = Object.entries(config).flatMap(([k, v]) => ['-c', `${k}=${v}`]);
+  for (const [k, v] of Object.entries(config)) git(up, 'config', k, v);
   write(path.join(up, '.vscode', 'settings.json'), settings);
   write(path.join(up, 'README.md'), '# r\n');
   git(up, 'add', '.');
   git(up, 'commit', '-qm', 'init');
   const me = path.join(dir, 'me');
-  git(dir, 'clone', '-q', up, me);
+  git(dir, 'clone', '-q', ...cfg, up, me);
   return { up, me, t: core.folderTarget(me), commitUp: (f, text, msg = 'up') => (write(path.join(up, f), text), git(up, 'add', '.'), git(up, 'commit', '-qm', msg)) };
 }

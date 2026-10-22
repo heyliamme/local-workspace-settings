@@ -10,8 +10,8 @@ const { sync, planInit, commitInit, unhide, hide, upstreamChanged } = core;
 const ctx = () => ({ backups: new core.Backups(path.join(tmp('lws-b-'), 'b'), () => 20) });
 const status = (dir) => git(dir, 'status', '--porcelain');
 
-async function committed(settings, edit) {
-  const r = repo(settings);
+async function committed(settings, edit, config) {
+  const r = repo(settings, config);
   if (edit) write(r.t.settingsFile, edit);
   const c = ctx();
   const plan = await planInit(r.t, 'committed', [], c);
@@ -69,6 +69,39 @@ test('an upstream change to settings.json is noticed; unhide, pull, and personal
   assert.deepEqual(readJson(t.settingsFile), { 'editor.tabSize': 2, 'editor.rulers': [100], 'peacock.color': '#222222' });
   assert.match(git(me, 'ls-files', '-v', '.vscode/settings.json'), /^S /);
   assert.equal(await upstreamChanged(t), false);
+});
+
+// Windows: core.autocrlf decides whether the checked-out file has CRLF. Unhiding must leave a
+// file Git sees as unchanged either way, or the pull it was for stops on "local changes".
+for (const autocrlf of ['true', 'false']) {
+  test(`core.autocrlf=${autocrlf}: unhiding to pull leaves nothing for Git to object to, and personal settings come back`, async () => {
+    const { me, t, c, st, commitUp } = await committed({ 'editor.tabSize': 2 }, undefined, { 'core.autocrlf': autocrlf });
+    write(t.localFile, { 'peacock.color': '#222222' });
+    const s = (await sync(t, st, c, { router: router() })).state;
+    commitUp('.vscode/settings.json', { 'editor.tabSize': 2, 'editor.rulers': [100] });
+    git(me, 'fetch', '-q');
+    const u = await unhide(t, s, c, 'pull', router());
+    assert.equal(u.status, 'unhidden');
+    assert.equal(git(me, 'status', '--porcelain', '--untracked-files=no'), '');
+    git(me, 'pull', '-q', '--ff-only');
+    const back = await sync(t, u.state, c, { router: router('defer') });
+    assert.equal(back.rehid, true);
+    assert.deepEqual(readJson(t.settingsFile), { 'editor.tabSize': 2, 'editor.rulers': [100], 'peacock.color': '#222222' });
+  });
+}
+
+test('unhiding a settings.json that differs from the commit only in line endings puts the committed bytes back', async () => {
+  // core.autocrlf=false and a CRLF working copy of an LF commit: Git sees every line changed.
+  const team = '{\n  "editor.tabSize": 2\n}\n';
+  const { me, t, c, st, commitUp } = await committed(team, team.replace(/\n/g, '\r\n'), { 'core.autocrlf': 'false' });
+  commitUp('.vscode/settings.json', { 'editor.tabSize': 4 });
+  git(me, 'fetch', '-q');
+  const u = await unhide(t, st, c, 'pull', router());
+  assert.equal(u.status, 'unhidden');
+  assert.equal(read(t.settingsFile), team);
+  assert.equal(git(me, 'status', '--porcelain', '--untracked-files=no'), '');
+  git(me, 'pull', '-q', '--ff-only');
+  assert.deepEqual(readJson(t.settingsFile), { 'editor.tabSize': 4 });
 });
 
 test('a team change: the file shows the commit plus the change, and personal settings return after it is committed', async () => {
