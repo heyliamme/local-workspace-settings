@@ -1,7 +1,7 @@
 import { execFileSync } from 'child_process';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import { createRequire } from 'module';
-import { devNull, tmpdir } from 'os';
+import { tmpdir } from 'os';
 import path from 'path';
 import { after } from 'node:test';
 
@@ -48,7 +48,10 @@ export function router(route = 'local') {
 // The machine's Git config is shut out for the tests and for the extension's own git calls
 // alike (it inherits process.env): a Windows runner's system core.autocrlf=true seen by one
 // side only would make the two disagree about line endings. Tests that care set it per repo.
-process.env.GIT_CONFIG_GLOBAL = devNull;
+// An empty file rather than os.devNull: Git for Windows can't open \\.\nul as a config file.
+const emptyConfig = path.join(tmp('lws-gitconfig-'), 'gitconfig');
+writeFileSync(emptyConfig, '');
+process.env.GIT_CONFIG_GLOBAL = emptyConfig;
 process.env.GIT_CONFIG_NOSYSTEM = '1';
 const gitEnv = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.com' };
 export function git(cwd, ...args) {
