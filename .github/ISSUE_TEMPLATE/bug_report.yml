@@ -1,0 +1,34 @@
+name: Bug report
+description: A setting lost or routed to the wrong file, a crash, or something that looks off
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Settings files can hold private paths or tokens. Redact them before pasting.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Git mode
+      options:
+        - Generated settings.json (settings.shared.json committed)
+        - settings.json committed, personal settings hidden
+        - Not initialised yet
+  - type: textarea
+    id: files
+    attributes:
+      label: The files involved
+      description: The relevant part of settings.shared.json, settings.local.json and settings.json, before and after. A copy of each file is in the extension's backups (Undo Last Change lists them).
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: OS, VS Code (or other editor), the extension, Git, and Remote / WSL / container if used
+    validations:
+      required: true

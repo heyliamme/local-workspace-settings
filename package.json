@@ -1,0 +1,366 @@
+{
+  "name": "local-workspace-settings",
+  "displayName": "Local Workspace Settings",
+  "description": "A git-ignored settings.local.json for VS Code: commit the team's workspace settings, keep your own paths, colours and toggles out of Git. Settings changed in the Settings editor go to your local file.",
+  "version": "0.1.0",
+  "publisher": "heyliam",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#16202a",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heyliamme/local-workspace-settings"
+  },
+  "bugs": {
+    "url": "https://github.com/heyliamme/local-workspace-settings/issues"
+  },
+  "homepage": "https://github.com/heyliamme/local-workspace-settings#readme",
+  "qna": "https://github.com/heyliamme/local-workspace-settings/issues",
+  "pricing": "Free",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "settings.local.json",
+    "local settings",
+    "workspace settings",
+    "settings.json",
+    "gitignore",
+    "personal settings",
+    "team settings",
+    "shared settings",
+    "skip-worktree",
+    "settings inheritance",
+    "code-workspace",
+    "peacock"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "workspaceContains:.vscode/settings.json",
+    "workspaceContains:.vscode/settings.shared.json",
+    "workspaceContains:.vscode/settings.local.json",
+    "onStartupFinished",
+    "onWebviewPanel:localWorkspaceSettings"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In Restricted Mode nothing is written and Git is never run: the overview is read-only until you trust the folder, because merging means writing .vscode/settings.json and running git in a repository you haven't vouched for."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Settings files are merged on disk and kept out of Git with the git command line, which need a folder on disk."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "localWorkspaceSettings.initialise",
+        "title": "Set Up in This Workspace…",
+        "category": "Local Workspace Settings",
+        "icon": "$(add)"
+      },
+      {
+        "command": "localWorkspaceSettings.openView",
+        "title": "Show Settings Overview",
+        "category": "Local Workspace Settings",
+        "icon": "$(layers)"
+      },
+      {
+        "command": "localWorkspaceSettings.regenerate",
+        "title": "Merge Now",
+        "category": "Local Workspace Settings",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "localWorkspaceSettings.openShared",
+        "title": "Open Shared Settings",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.openLocal",
+        "title": "Open Local Settings",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.showDiff",
+        "title": "Show What Local Settings Change",
+        "category": "Local Workspace Settings",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "localWorkspaceSettings.undo",
+        "title": "Undo Last Change",
+        "category": "Local Workspace Settings",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "localWorkspaceSettings.restoreBackup",
+        "title": "Restore a Backup…",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.moveToLocal",
+        "title": "Move a Setting to Local…",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.moveToShared",
+        "title": "Move a Setting to Shared…",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.removeOverride",
+        "title": "Remove a Local Override…",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.gitIgnore",
+        "title": "Keep Local Settings Out of Git…",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.unhideForPull",
+        "title": "Unhide settings.json to Pull",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.unhideForTeamChange",
+        "title": "Unhide settings.json to Commit a Team Change",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.hide",
+        "title": "Hide Personal Settings Again",
+        "category": "Local Workspace Settings"
+      },
+      {
+        "command": "localWorkspaceSettings.stop",
+        "title": "Stop Using Local Settings Here…",
+        "category": "Local Workspace Settings"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "localWorkspaceSettings.regenerate",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.openShared",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.openLocal",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.showDiff",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.moveToLocal",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.moveToShared",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.removeOverride",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.gitIgnore",
+          "when": "localWorkspaceSettings.active"
+        },
+        {
+          "command": "localWorkspaceSettings.unhideForPull",
+          "when": "localWorkspaceSettings.committed"
+        },
+        {
+          "command": "localWorkspaceSettings.unhideForTeamChange",
+          "when": "localWorkspaceSettings.committed"
+        },
+        {
+          "command": "localWorkspaceSettings.hide",
+          "when": "localWorkspaceSettings.committed"
+        },
+        {
+          "command": "localWorkspaceSettings.stop",
+          "when": "localWorkspaceSettings.active"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "localWorkspaceSettings.openView",
+          "when": "resourceFilename =~ /^settings(\\.shared|\\.local)?\\.json$/ && resourceDirname =~ /[\\\\/]\\.vscode$/",
+          "group": "navigation@50"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Local Workspace Settings",
+      "properties": {
+        "localWorkspaceSettings.defaultRoute": {
+          "type": "string",
+          "enum": [
+            "local",
+            "ask",
+            "shared"
+          ],
+          "enumDescriptions": [
+            "Move it to settings.local.json and say so, with a button to move it to shared instead",
+            "Ask each time, with buttons to remember the answer",
+            "Move it to settings.shared.json (the committed file)"
+          ],
+          "default": "local",
+          "scope": "application",
+          "markdownDescription": "Where a setting goes when it is changed in `settings.json` itself: by the Settings editor, by another extension (Peacock, the Python extension, …) or by hand. Rules in `#localWorkspaceSettings.routes#` and answers you asked to remember come first."
+        },
+        "localWorkspaceSettings.routes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "local",
+              "ask",
+              "shared"
+            ]
+          },
+          "default": {
+            "peacock.*": "local",
+            "workbench.colorCustomizations": "local",
+            "python.defaultInterpreterPath": "local"
+          },
+          "scope": "application",
+          "markdownDescription": "Where changed settings go, by name. `*` matches any characters, so `peacock.*` covers every Peacock setting. The most specific pattern wins. Values: `local`, `shared` or `ask`."
+        },
+        "localWorkspaceSettings.arrayMerge": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "replace",
+              "append",
+              "prepend",
+              "union"
+            ]
+          },
+          "default": {},
+          "scope": "resource",
+          "markdownDescription": "How a list in `settings.local.json` combines with the same list in the shared settings. By default it **replaces** it. Keys are setting names (`*` allowed), for example `{ \"cSpell.words\": \"union\" }`. Set it in `settings.shared.json` to apply it to the whole team; that wins over your user setting."
+        },
+        "localWorkspaceSettings.backups": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 200,
+          "scope": "application",
+          "markdownDescription": "How many earlier versions to keep. Before every write, the files it changes are copied into the extension's own storage; **Undo Last Change** and **Restore a Backup…** put them back."
+        },
+        "localWorkspaceSettings.header": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "markdownDescription": "Start a generated `settings.json` with a comment saying where its settings come from."
+        },
+        "localWorkspaceSettings.statusBar": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "markdownDescription": "Show the status bar item in workspaces that use local settings."
+        }
+      }
+    },
+    "walkthroughs": [
+      {
+        "id": "start",
+        "title": "Personal settings, kept out of Git",
+        "description": "Commit the team's workspace settings and keep your own on your machine.",
+        "steps": [
+          {
+            "id": "how",
+            "title": "How it works",
+            "description": "VS Code reads one settings file per folder, so the extension writes the merge of the team's settings and yours into it, and moves changes made there to the right file.",
+            "media": {
+              "markdown": "media/walkthrough/how.md"
+            }
+          },
+          {
+            "id": "mode",
+            "title": "Choose how settings.json lives in Git",
+            "description": "Either settings.json becomes a generated, ignored file and the team commits settings.shared.json, or settings.json stays committed and your changes to it are hidden from Git.\n[Set up this workspace](command:localWorkspaceSettings.initialise)",
+            "media": {
+              "markdown": "media/walkthrough/modes.md"
+            },
+            "completionEvents": [
+              "onCommand:localWorkspaceSettings.initialise"
+            ]
+          },
+          {
+            "id": "overview",
+            "title": "See where each setting comes from",
+            "description": "The overview lists every setting with its source and lets you move it between your file and the team's.\n[Show the overview](command:localWorkspaceSettings.openView)",
+            "media": {
+              "markdown": "media/walkthrough/overview.md"
+            },
+            "completionEvents": [
+              "onCommand:localWorkspaceSettings.openView"
+            ]
+          }
+        ]
+      }
+    ],
+    "languages": [
+      {
+        "id": "jsonc",
+        "filenamePatterns": [
+          "**/.vscode/settings.local.json",
+          "**/.vscode/settings.shared.json",
+          "**/*.code-workspace.local.json"
+        ]
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "/.vscode/settings.local.json",
+          "/.vscode/settings.shared.json"
+        ],
+        "url": "vscode://schemas/settings/folder"
+      },
+      {
+        "fileMatch": "*.code-workspace.local.json",
+        "url": "vscode://schemas/settings/workspace"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "node scripts/build.mjs && node --test test/*.test.mjs",
+    "package": "node scripts/build.mjs --prod && vsce package --no-dependencies",
+    "test:e2e": "npm run package && node test/e2e/run.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/vscode": "^1.90.0",
+    "@vscode/codicons": "0.0.36",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "jsonc-parser": "3.3.1",
+    "ovsx": "^1.3.0",
+    "typescript": "^7.0.2"
+  }
+}

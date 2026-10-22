@@ -1,0 +1,13 @@
+**
+!dist/extension.js
+!dist/webview.js
+!dist/webview.css
+!dist/codicon.css
+!dist/codicon.ttf
+!media/icon.png
+!media/walkthrough/*.md
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!ThirdPartyNotices.txt
